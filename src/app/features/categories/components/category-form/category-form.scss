@@ -1,0 +1,49 @@
+.category-form-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.header-section {
+  margin-bottom: 20px;
+
+  h1 {
+    margin: 0;
+    color: #424242;
+  }
+}
+
+mat-card {
+  margin-bottom: 20px;
+
+  mat-card-header {
+    margin-bottom: 16px;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+.translation-form {
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+
+  button mat-icon {
+    margin-right: 8px;
+  }
+}

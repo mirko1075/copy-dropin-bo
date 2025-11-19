@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentation - Sistema Gestione Prezzi e Disponibilità</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.10.0/swagger-ui.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    .topbar {
+      display: none;
+    }
+    .swagger-ui .info {
+      margin: 50px 0;
+    }
+    .swagger-ui .info .title {
+      font-size: 36px;
+      color: #1976d2;
+    }
+    /* Custom theme colors */
+    .swagger-ui .opblock.opblock-get {
+      background: rgba(97, 175, 254, 0.1);
+      border-color: #61affe;
+    }
+    .swagger-ui .opblock.opblock-post {
+      background: rgba(73, 204, 144, 0.1);
+      border-color: #49cc90;
+    }
+    .swagger-ui .opblock.opblock-put {
+      background: rgba(252, 161, 48, 0.1);
+      border-color: #fca130;
+    }
+    .swagger-ui .opblock.opblock-delete {
+      background: rgba(249, 62, 62, 0.1);
+      border-color: #f93e3e;
+    }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5.10.0/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.10.0/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      // Configurazione Swagger UI
+      const ui = SwaggerUIBundle({
+        url: "./openapi.yaml",
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout",
+        defaultModelsExpandDepth: 1,
+        defaultModelExpandDepth: 1,
+        docExpansion: "list",
+        filter: true,
+        showRequestHeaders: true,
+        supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+        validatorUrl: null, // Disable validator badge
+
+        // Configurazione italiana
+        syntaxHighlight: {
+          activate: true,
+          theme: "monokai"
+        },
+
+        // Server di default
+        servers: [
+          {
+            url: "http://localhost:3000/api/v1",
+            description: "Development Server"
+          },
+          {
+            url: "https://staging.example.com/api/v1",
+            description: "Staging Server"
+          },
+          {
+            url: "https://api.example.com/api/v1",
+            description: "Production Server"
+          }
+        ],
+
+        // Interceptor per aggiungere headers personalizzati
+        requestInterceptor: (request) => {
+          // Aggiungi header di autenticazione se necessario
+          // request.headers['Authorization'] = 'Bearer YOUR_TOKEN';
+          request.headers['Accept-Language'] = 'it-IT';
+          return request;
+        },
+
+        // Response interceptor
+        responseInterceptor: (response) => {
+          console.log('Response received:', response);
+          return response;
+        }
+      });
+
+      window.ui = ui;
+    };
+  </script>
+
+  <!-- Footer personalizzato -->
+  <div style="text-align: center; padding: 20px; background: #fafafa; border-top: 1px solid #eee; margin-top: 40px;">
+    <p style="color: #666; margin: 0;">
+      <strong>Sistema Gestione Prezzi e Disponibilità</strong> - API v1.0.0
+    </p>
+    <p style="color: #999; margin: 10px 0 0 0; font-size: 14px;">
+      Documentazione generata con OpenAPI 3.0.3 |
+      <a href="./openapi.yaml" target="_blank" style="color: #1976d2;">Scarica YAML</a> |
+      <a href="./OPENAPI_GUIDE.md" target="_blank" style="color: #1976d2;">Guida</a> |
+      <a href="./README.md" target="_blank" style="color: #1976d2;">Documentazione Completa</a>
+    </p>
+  </div>
+</body>
+</html>

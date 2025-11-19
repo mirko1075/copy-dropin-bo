@@ -1,0 +1,281 @@
+<div class="pricing-calendar-container">
+  @if (product(); as prod) {
+    <div class="header-section">
+      <button mat-icon-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="product-info">
+        <h1>{{ prod.name }}</h1>
+        <p>Prezzo Base: <strong>{{ formatPrice(prod.price || 0) }}</strong></p>
+      </div>
+    </div>
+
+    <!-- View Toggle -->
+    <div class="view-toggle">
+      <mat-button-toggle-group [value]="calendarView()" (change)="switchView($event.value)">
+        <mat-button-toggle [value]="CalendarView.Monthly">
+          <mat-icon>calendar_month</mat-icon>
+          Mensile
+        </mat-button-toggle>
+        <mat-button-toggle [value]="CalendarView.Yearly">
+          <mat-icon>calendar_view_month</mat-icon>
+          Annuale
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <div class="content-layout" (mouseup)="onMouseUp()">
+      <div class="calendar-section">
+        <!-- Monthly View -->
+        @if (calendarView() === CalendarView.Monthly) {
+          <mat-card>
+            <mat-card-header>
+              <div class="month-navigation">
+                <button mat-icon-button (click)="previousMonth()">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+                <h2>{{ monthName() }}</h2>
+                <button mat-icon-button (click)="nextMonth()">
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              </div>
+            </mat-card-header>
+          <mat-card-content>
+            <div class="calendar-grid">
+              @for (day of weekDays; track day) {
+                <div class="week-day">{{ day }}</div>
+              }
+              @for (day of calendarDays(); track day.dateString) {
+                <div
+                  [ngClass]="getDayClass(day)"
+                  (click)="selectDay(day, $event)"
+                  (dblclick)="onDayDoubleClick(day)"
+                  (mouseenter)="onDayMouseEnter(day)"
+                >
+                  <div class="day-number">{{ day.date.getDate() }}</div>
+                  <div class="day-price">{{ formatPrice(day.finalPrice) }}</div>
+                  @if (day.stock !== undefined) {
+                    <div class="day-stock">{{ day.stock }} posti</div>
+                  }
+                  @if (day.priceType !== PriceType.Base) {
+                    <mat-icon class="override-icon">stars</mat-icon>
+                  }
+                </div>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-color today"></span>
+            <span>Oggi</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color weekend"></span>
+            <span>Weekend</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color override"></span>
+            <span>Prezzo Personalizzato</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color selected"></span>
+            <span>Selezionato</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color inactive"></span>
+            <span>Prodotto Non Attivo</span>
+          </div>
+        </div>
+        }
+
+        <!-- Yearly View -->
+        @if (calendarView() === CalendarView.Yearly) {
+          <div class="year-navigation">
+            <button mat-icon-button (click)="previousYear()">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <h2>{{ yearName() }}</h2>
+            <button mat-icon-button (click)="nextYear()">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+
+          <div class="yearly-grid">
+            @for (monthDate of yearlyMonths(); track monthDate.getTime()) {
+              <mat-card class="mini-month">
+                <mat-card-header>
+                  <mat-card-title class="mini-month-title">
+                    {{ monthDate.toLocaleDateString('it-IT', { month: 'long' }) }}
+                  </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="mini-calendar">
+                    <!-- Week days header -->
+                    @for (day of ['L', 'M', 'M', 'G', 'V', 'S', 'D']; track $index) {
+                      <div class="mini-week-day">{{ day }}</div>
+                    }
+                    <!-- Days will be rendered by a helper method -->
+                    <!-- This is a simplified version, you can expand this -->
+                    <div class="mini-day-placeholder">Mini calendar coming soon</div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            }
+          </div>
+        }
+      </div>
+
+      @if (selectedDays().length > 0) {
+        <div class="price-editor">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Modifica Selezione</mat-card-title>
+              <mat-card-subtitle>
+                {{ selectedDays().length }} {{ selectedDays().length === 1 ? 'giorno selezionato' : 'giorni selezionati' }}
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="price-info">
+                <p><strong>Prodotto:</strong> {{ product()?.name }}</p>
+                <p><strong>Prezzo Base:</strong> {{ formatPrice(product()?.price || 0) }}</p>
+                @if (selectedDays().length === 1) {
+                  <p><strong>Data:</strong> {{ selectedDays()[0].date.toLocaleDateString('it-IT') }}</p>
+                  @if (selectedDays()[0].stock !== undefined) {
+                    <p><strong>Disponibilità Attuale:</strong> {{ selectedDays()[0].stock }} posti</p>
+                  }
+                }
+              </div>
+
+              <div class="price-actions">
+                <h3>Stato Prodotto</h3>
+
+                <div class="active-status-control">
+                  <mat-slide-toggle
+                    #activeToggle
+                    [checked]="selectedDays().length === 1 ? (selectedDays()[0].isActive ?? true) : true"
+                    color="primary"
+                  >
+                    Prodotto Attivo
+                  </mat-slide-toggle>
+                  <p class="hint-text">
+                    @if (activeToggle.checked) {
+                      Il prodotto è disponibile per la vendita in questi giorni
+                    } @else {
+                      Il prodotto NON è disponibile per la vendita in questi giorni
+                    }
+                  </p>
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    class="action-btn"
+                    (click)="setActiveStatus(activeToggle.checked)"
+                  >
+                    <mat-icon>{{ activeToggle.checked ? 'check_circle' : 'cancel' }}</mat-icon>
+                    {{ activeToggle.checked ? 'Attiva' : 'Disattiva' }} Prodotto
+                  </button>
+                </div>
+
+                <mat-divider></mat-divider>
+
+                <h3>Gestione Disponibilità</h3>
+
+                <mat-form-field class="full-width">
+                  <mat-label>Posti Disponibili</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    #stockInput
+                    [value]="selectedDays().length === 1 ? (selectedDays()[0].stock ?? 0) : 0"
+                    min="0"
+                    step="1"
+                  >
+                  <mat-icon matIconPrefix>event_seat</mat-icon>
+                  <mat-hint>Numero di posti disponibili</mat-hint>
+                </mat-form-field>
+                <button
+                  mat-raised-button
+                  color="primary"
+                  class="action-btn"
+                  (click)="setStockOnly(+stockInput.value)"
+                >
+                  <mat-icon>inventory</mat-icon>
+                  Aggiorna Disponibilità
+                </button>
+
+                <mat-divider></mat-divider>
+
+                <h3>Modifica Prezzo</h3>
+
+                <button
+                  mat-raised-button
+                  color="primary"
+                  class="action-btn"
+                  (click)="setPriceOverride(PriceType.Base)"
+                >
+                  <mat-icon>refresh</mat-icon>
+                  Usa Prezzo Base
+                </button>
+
+                <mat-form-field class="full-width">
+                  <mat-label>Prezzo Fisso</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    #fixedPrice
+                    [value]="selectedDays().length === 1 && selectedDays()[0].priceType === PriceType.Fixed ? selectedDays()[0].adjustment : (product()?.price || 0)"
+                    min="0"
+                    step="0.01"
+                  >
+                  <span matTextSuffix>€</span>
+                </mat-form-field>
+                <button
+                  mat-raised-button
+                  color="accent"
+                  class="action-btn"
+                  (click)="setPriceOverride(PriceType.Fixed, +fixedPrice.value)"
+                >
+                  <mat-icon>euro</mat-icon>
+                  Imposta Prezzo Fisso
+                </button>
+
+                <mat-form-field class="full-width">
+                  <mat-label>Sconto/Aumento %</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    #percentageValue
+                    [value]="selectedDays().length === 1 && selectedDays()[0].priceType === PriceType.Percentage ? selectedDays()[0].adjustment : 0"
+                    step="1"
+                  >
+                  <span matTextSuffix>%</span>
+                  <mat-hint>Usa - per sconto, + per aumento</mat-hint>
+                </mat-form-field>
+                <button
+                  mat-raised-button
+                  color="accent"
+                  class="action-btn"
+                  (click)="setPriceOverride(PriceType.Percentage, +percentageValue.value)"
+                >
+                  <mat-icon>percent</mat-icon>
+                  Applica Percentuale
+                </button>
+
+                <button
+                  mat-stroked-button
+                  color="warn"
+                  class="action-btn"
+                  (click)="removeOverride()"
+                >
+                  <mat-icon>delete</mat-icon>
+                  Rimuovi Personalizzazione
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      }
+    </div>
+  }
+</div>

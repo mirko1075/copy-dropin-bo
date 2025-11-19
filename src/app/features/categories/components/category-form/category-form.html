@@ -1,0 +1,66 @@
+<div class="category-form-container">
+  <div class="header-section">
+    <h1>{{ isEditMode() ? 'Modifica Categoria' : 'Nuova Categoria' }}</h1>
+  </div>
+
+  <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Informazioni Generali</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-grid">
+          <mat-form-field class="full-width">
+            <mat-label>Nome Categoria</mat-label>
+            <input matInput formControlName="name" required>
+            @if (categoryForm.get('name')?.hasError('required')) {
+              <mat-error>Il nome è obbligatorio</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Stato</mat-label>
+            <mat-select formControlName="status" required>
+              @for (status of statuses; track status.value) {
+                <mat-option [value]="status.value">{{ status.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field class="full-width">
+            <mat-label>URL Immagine</mat-label>
+            <input matInput formControlName="imageUrl">
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Traduzioni</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-tab-group formGroupName="translations">
+          @for (lang of languages; track lang.code) {
+            <mat-tab [label]="lang.flag + ' ' + lang.name">
+              <div class="translation-form" [formGroupName]="lang.code">
+                <mat-form-field class="full-width">
+                  <mat-label>Nome ({{lang.name}})</mat-label>
+                  <input matInput formControlName="name">
+                </mat-form-field>
+              </div>
+            </mat-tab>
+          }
+        </mat-tab-group>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="actions">
+      <button type="button" mat-button (click)="cancel()">Annulla</button>
+      <button type="submit" mat-raised-button color="primary">
+        <mat-icon>save</mat-icon>
+        {{ isEditMode() ? 'Aggiorna' : 'Crea' }}
+      </button>
+    </div>
+  </form>
+</div>

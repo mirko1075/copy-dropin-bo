@@ -1,0 +1,73 @@
+<div class="dashboard-container">
+  <h1>Dashboard</h1>
+
+  <div class="stats-grid">
+    <mat-card class="stat-card" (click)="router.navigate(['/products'])" style="cursor: pointer;">
+      <mat-card-header>
+        <mat-icon>inventory_2</mat-icon>
+        <mat-card-title>Prodotti</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-number">{{ productCount }}</div>
+        <div class="stat-label">Totale prodotti</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card" (click)="router.navigate(['/categories'])" style="cursor: pointer;">
+      <mat-card-header>
+        <mat-icon>category</mat-icon>
+        <mat-card-title>Categorie</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-number">{{ categoryCount }}</div>
+        <div class="stat-label">Categorie attive</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card" (click)="router.navigate(['/products'], { queryParams: { status: 'published' } })" style="cursor: pointer;">
+      <mat-card-header>
+        <mat-icon>check_circle</mat-icon>
+        <mat-card-title>Pubblicati</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-number">{{ publishedProductCount }}</div>
+        <div class="stat-label">Prodotti attivi</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card" (click)="router.navigate(['/products'], { queryParams: { status: 'unpublished' } })" style="cursor: pointer;">
+      <mat-card-header>
+        <mat-icon>archive</mat-icon>
+        <mat-card-title>Archiviati</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-number">{{ unpublishedProductCount }}</div>
+        <div class="stat-label">Prodotti non pubblicati</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="welcome-section">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Benvenuto nel Backoffice</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>
+          Questo è il sistema di gestione del catalogo prodotti e servizi.
+          Utilizza il menu laterale per navigare tra le diverse sezioni.
+        </p>
+        <mat-divider></mat-divider>
+        <h3>Funzionalità disponibili:</h3>
+        <ul>
+          <li>Gestione Prodotti e Servizi</li>
+          <li>Gestione Categorie</li>
+          <li>Configurazione Prezzi e Disponibilità</li>
+          <li>Configurazione Metodi di Pagamento</li>
+          <li>Multi-tenancy (Tenant/Vendor/Site)</li>
+          <li>Traduzioni in 5 lingue (IT, EN, DE, FR, ES)</li>
+        </ul>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

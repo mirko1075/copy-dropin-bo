@@ -1,0 +1,122 @@
+<div class="product-form-container">
+  <div class="header-section">
+    <h1>{{ isEditMode() ? 'Modifica Prodotto' : 'Nuovo Prodotto' }}</h1>
+  </div>
+
+  <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Informazioni Generali</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-grid">
+          <mat-form-field class="full-width">
+            <mat-label>Nome Prodotto</mat-label>
+            <input matInput formControlName="name" required>
+            @if (productForm.get('name')?.hasError('required')) {
+              <mat-error>Il nome è obbligatorio</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Categoria</mat-label>
+            <mat-select formControlName="categoryId" required>
+              @for (category of categories(); track category.id) {
+                <mat-option [value]="category.id">{{ category.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Stato</mat-label>
+            <mat-select formControlName="status" required>
+              @for (status of statuses; track status.value) {
+                <mat-option [value]="status.value">{{ status.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Prezzo Base</mat-label>
+            <input matInput type="number" formControlName="price" required>
+            <span matTextSuffix>€</span>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Durata (minuti)</mat-label>
+            <input matInput type="number" formControlName="duration">
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Numero Persone</mat-label>
+            <input matInput type="number" formControlName="numberOfPeople">
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Disponibilità Base</mat-label>
+            <input matInput type="number" formControlName="stock">
+            <mat-icon matIconPrefix>event_seat</mat-icon>
+            <mat-hint>Posti disponibili per giorno</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Data Inizio Disponibilità</mat-label>
+            <input matInput [matDatepicker]="startPicker" formControlName="availabilityStartDate">
+            <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Data Fine Disponibilità</mat-label>
+            <input matInput [matDatepicker]="endPicker" formControlName="availabilityEndDate">
+            <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field class="full-width">
+            <mat-label>URL Immagine</mat-label>
+            <input matInput formControlName="imageUrl">
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Traduzioni</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-tab-group formGroupName="translations">
+          @for (lang of languages; track lang.code) {
+            <mat-tab [label]="lang.flag + ' ' + lang.name">
+              <div class="translation-form" [formGroupName]="lang.code">
+                <mat-form-field class="full-width">
+                  <mat-label>Titolo ({{lang.name}})</mat-label>
+                  <input matInput formControlName="name">
+                </mat-form-field>
+
+                <mat-form-field class="full-width">
+                  <mat-label>Descrizione Breve ({{lang.name}})</mat-label>
+                  <textarea matInput formControlName="shortDescription" rows="2"></textarea>
+                </mat-form-field>
+
+                <mat-form-field class="full-width">
+                  <mat-label>Descrizione Completa ({{lang.name}})</mat-label>
+                  <textarea matInput formControlName="longDescription" rows="5"></textarea>
+                </mat-form-field>
+              </div>
+            </mat-tab>
+          }
+        </mat-tab-group>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="actions">
+      <button type="button" mat-button (click)="cancel()">Annulla</button>
+      <button type="submit" mat-raised-button color="primary">
+        <mat-icon>save</mat-icon>
+        {{ isEditMode() ? 'Aggiorna' : 'Crea' }}
+      </button>
+    </div>
+  </form>
+</div>

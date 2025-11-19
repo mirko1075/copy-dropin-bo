@@ -1,0 +1,35 @@
+<mat-toolbar color="primary" class="header-toolbar">
+  <button mat-icon-button (click)="onMenuToggle()">
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <span class="app-title">Catalogo Servizi Backoffice</span>
+
+  <span class="spacer"></span>
+
+  @if (contextService.context(); as context) {
+    <div class="tenant-info">
+      <mat-icon>business</mat-icon>
+      <span>Tenant: {{ context.tenantId }} | Vendor: {{ context.vendorId }}</span>
+    </div>
+  }
+
+  <button mat-icon-button [matMenuTriggerFor]="userMenu">
+    <mat-icon>account_circle</mat-icon>
+  </button>
+
+  <mat-menu #userMenu="matMenu">
+    @if (authService.currentUser(); as user) {
+      <div class="user-info">
+        <strong>{{ user.username }}</strong>
+        <br />
+        <small>{{ user.email }}</small>
+      </div>
+      <mat-divider></mat-divider>
+    }
+    <button mat-menu-item (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      <span>Logout</span>
+    </button>
+  </mat-menu>
+</mat-toolbar>

@@ -1,0 +1,41 @@
+.header-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.app-title {
+  font-size: 18px;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+.tenant-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 20px;
+  font-size: 14px;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.user-info {
+  padding: 10px 16px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .app-title {
+    display: none;
+  }
+
+  .tenant-info span {
+    display: none;
+  }
+}

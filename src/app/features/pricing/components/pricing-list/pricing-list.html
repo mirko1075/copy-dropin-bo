@@ -1,0 +1,49 @@
+<div class="pricing-list-container">
+  <div class="header-section">
+    <h1>Gestione Prezzi per Prodotto</h1>
+    <p>Seleziona un prodotto per gestire i prezzi giornalieri</p>
+  </div>
+
+  <div class="products-grid">
+    @for (product of products(); track product.id) {
+      <mat-card class="product-card">
+        <mat-card-header>
+          <div class="product-image">
+            @if (product.imageUrl) {
+              <img [src]="product.imageUrl" [alt]="product.name">
+            } @else {
+              <mat-icon>inventory_2</mat-icon>
+            }
+          </div>
+          <mat-card-title>{{ product.name }}</mat-card-title>
+          <mat-card-subtitle>{{ product.category }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="product-info">
+            <div class="info-row">
+              <span class="label">Prezzo Base:</span>
+              <strong class="price">{{ formatPrice(product.price) }}</strong>
+            </div>
+            <div class="info-row">
+              <span class="label">Stato:</span>
+              <app-status-badge [status]="product.status"></app-status-badge>
+            </div>
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" (click)="managePricing(product)">
+            <mat-icon>calendar_today</mat-icon>
+            Gestisci Prezzi
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
+
+    @if (products().length === 0) {
+      <div class="no-products">
+        <mat-icon>inventory_2</mat-icon>
+        <p>Nessun prodotto disponibile</p>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,928 @@
+openapi: 3.0.3
+info:
+  title: Sistema Gestione Prezzi e Disponibilità API
+  description: |
+    API REST per la gestione dinamica di prezzi, disponibilità e attivazione
+    di prodotti/servizi turistici con calendario interattivo.
+
+    ## Caratteristiche Principali
+
+    - **Gestione Prezzi Dinamici**: Base, Fissi, Percentuali
+    - **Gestione Stock**: Disponibilità giornaliera
+    - **Stato Attivazione**: Controllo vendibilità per giorno
+    - **Operazioni Bulk**: Modifiche su range di date
+
+    ## Autenticazione
+
+    (Da implementare - JWT Bearer Token)
+
+  version: 1.0.0
+  contact:
+    name: Development Team
+    email: dev@example.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://staging.example.com/api/v1
+    description: Staging server
+  - url: https://api.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Products
+    description: Gestione prodotti/servizi
+  - name: Daily Prices
+    description: Gestione prezzi e disponibilità giornaliera
+  - name: Categories
+    description: Gestione categorie prodotti
+
+paths:
+  /products:
+    get:
+      tags:
+        - Products
+      summary: Lista tutti i prodotti
+      description: Recupera la lista di tutti i prodotti disponibili
+      operationId: getProducts
+      parameters:
+        - name: category
+          in: query
+          description: Filtra per categoria
+          required: false
+          schema:
+            type: string
+        - name: isActive
+          in: query
+          description: Filtra per stato attivo
+          required: false
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          description: Numero massimo di risultati
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          description: Offset per paginazione
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Lista prodotti recuperata con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ServiceProduct'
+                  total:
+                    type: integer
+                    description: Numero totale di prodotti
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+              examples:
+                success:
+                  value:
+                    data:
+                      - id: 1
+                        name: Tour Colosseo
+                        description: Visita guidata del Colosseo
+                        price: 25.00
+                        currency: EUR
+                        category: tours
+                        isActive: true
+                        stock: 30
+                      - id: 2
+                        name: Cooking Class
+                        price: 75.00
+                        currency: EUR
+                        category: experiences
+                        isActive: true
+                    total: 2
+                    limit: 50
+                    offset: 0
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Products
+      summary: Crea nuovo prodotto
+      description: Crea un nuovo prodotto/servizio
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+            examples:
+              tour:
+                summary: Tour della città
+                value:
+                  name: Tour Storico di Roma
+                  description: Tour guidato di 3 ore nel centro storico
+                  price: 35.00
+                  currency: EUR
+                  category: tours
+                  stock: 25
+                  availabilityStartDate: '2025-03-01'
+                  availabilityEndDate: '2025-11-30'
+      responses:
+        '201':
+          description: Prodotto creato con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ServiceProduct'
+              examples:
+                created:
+                  value:
+                    data:
+                      id: 1
+                      name: Tour Storico di Roma
+                      price: 35.00
+                      currency: EUR
+                      isActive: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /products/{productId}:
+    get:
+      tags:
+        - Products
+      summary: Dettagli prodotto
+      description: Recupera i dettagli di un prodotto specifico
+      operationId: getProduct
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Prodotto recuperato con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ServiceProduct'
+              examples:
+                success:
+                  value:
+                    data:
+                      id: 1
+                      name: Tour Colosseo
+                      description: Visita guidata del Colosseo con archeologo
+                      price: 25.00
+                      currency: EUR
+                      category: tours
+                      imageUrl: https://example.com/colosseo.jpg
+                      isActive: true
+                      stock: 30
+                      availabilityStartDate: '2025-01-01'
+                      availabilityEndDate: '2025-12-31'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Products
+      summary: Aggiorna prodotto
+      description: Aggiorna un prodotto esistente
+      operationId: updateProduct
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '200':
+          description: Prodotto aggiornato con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ServiceProduct'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags:
+        - Products
+      summary: Elimina prodotto
+      description: Elimina un prodotto e tutti i suoi DailyPrice associati
+      operationId: deleteProduct
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Prodotto eliminato con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+              example:
+                success: true
+                message: Prodotto eliminato con successo
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /daily-prices:
+    get:
+      tags:
+        - Daily Prices
+      summary: Lista prezzi giornalieri
+      description: Recupera prezzi giornalieri con filtri opzionali
+      operationId: getDailyPrices
+      parameters:
+        - name: productId
+          in: query
+          description: Filtra per prodotto
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          description: Data inizio (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: Data fine (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: isActive
+          in: query
+          description: Filtra per stato attivo
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Lista prezzi recuperata con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DailyPrice'
+              examples:
+                multiple:
+                  value:
+                    data:
+                      - id: 1
+                        productId: 1
+                        date: '2025-11-15'
+                        priceType: base
+                        finalPrice: 25.00
+                        currency: EUR
+                        stock: 30
+                        isActive: true
+                      - id: 2
+                        productId: 1
+                        date: '2025-12-25'
+                        priceType: fixed
+                        fixedPrice: 45.00
+                        finalPrice: 45.00
+                        currency: EUR
+                        stock: 15
+                        isActive: true
+
+  /daily-prices/product/{productId}:
+    get:
+      tags:
+        - Daily Prices
+      summary: Prezzi per prodotto
+      description: Recupera prezzi giornalieri per un prodotto specifico
+      operationId: getDailyPricesForProduct
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - name: year
+          in: query
+          required: true
+          description: Anno
+          schema:
+            type: integer
+            minimum: 2000
+            maximum: 2100
+        - name: month
+          in: query
+          required: true
+          description: Mese (0-11, 0=Gennaio)
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 11
+      responses:
+        '200':
+          description: Prezzi mensili recuperati con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DailyPrice'
+              examples:
+                november2025:
+                  value:
+                    data:
+                      - id: 1
+                        productId: 1
+                        date: '2025-11-01'
+                        priceType: percentage
+                        percentageAdjustment: -15
+                        finalPrice: 21.25
+                        currency: EUR
+                        stock: 30
+                        isActive: true
+                      - id: 2
+                        productId: 1
+                        date: '2025-11-02'
+                        priceType: base
+                        finalPrice: 25.00
+                        currency: EUR
+                        stock: 30
+                        isActive: true
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /daily-prices/override:
+    post:
+      tags:
+        - Daily Prices
+      summary: Imposta override prezzo
+      description: |
+        Imposta o aggiorna prezzo/disponibilità per un giorno specifico.
+        Se esiste già un override per quella data, viene aggiornato.
+        I campi non specificati vengono preservati.
+      operationId: setPriceOverride
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceOverride'
+            examples:
+              fixedPrice:
+                summary: Imposta prezzo fisso
+                value:
+                  productId: 1
+                  date: '2025-12-25'
+                  priceType: fixed
+                  value: 45.00
+                  stock: 15
+                  isActive: true
+              discount:
+                summary: Applica sconto 20%
+                value:
+                  productId: 1
+                  date: '2025-11-01'
+                  priceType: percentage
+                  value: -20
+                  isActive: true
+              stockOnly:
+                summary: Aggiorna solo stock
+                value:
+                  productId: 1
+                  date: '2025-08-15'
+                  priceType: base
+                  stock: 10
+              deactivate:
+                summary: Disattiva giorno
+                value:
+                  productId: 1
+                  date: '2025-11-11'
+                  priceType: base
+                  isActive: false
+      responses:
+        '200':
+          description: Override aggiornato con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DailyPrice'
+        '201':
+          description: Override creato con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DailyPrice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /daily-prices/bulk-override:
+    post:
+      tags:
+        - Daily Prices
+      summary: Override multipli (bulk)
+      description: Imposta override per più date contemporaneamente
+      operationId: bulkSetPriceOverride
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - dates
+              properties:
+                productId:
+                  type: integer
+                dates:
+                  type: array
+                  items:
+                    type: string
+                    format: date
+                  minItems: 1
+                  maxItems: 60
+                priceType:
+                  $ref: '#/components/schemas/PriceType'
+                value:
+                  type: number
+                  format: float
+                stock:
+                  type: integer
+                  minimum: 0
+                isActive:
+                  type: boolean
+            examples:
+              summerSeason:
+                summary: Alta stagione estate
+                value:
+                  productId: 1
+                  dates:
+                    - '2025-07-01'
+                    - '2025-07-02'
+                    - '2025-07-03'
+                  priceType: percentage
+                  value: 25
+                  stock: 20
+      responses:
+        '200':
+          description: Override bulk applicati con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+                    description: Numero di override creati/aggiornati
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DailyPrice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /daily-prices/override/{productId}/{date}:
+    delete:
+      tags:
+        - Daily Prices
+      summary: Rimuovi override
+      description: Rimuove l'override per un giorno specifico, ripristinando il prezzo base
+      operationId: removePriceOverride
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - name: date
+          in: path
+          required: true
+          description: Data (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Override rimosso con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+              example:
+                success: true
+                message: Override rimosso con successo
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /categories:
+    get:
+      tags:
+        - Categories
+      summary: Lista categorie
+      description: Recupera tutte le categorie disponibili
+      operationId: getCategories
+      responses:
+        '200':
+          description: Lista categorie recuperata con successo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+              examples:
+                success:
+                  value:
+                    data:
+                      - id: 1
+                        name: tours
+                        description: Tour guidati
+                        isActive: true
+                      - id: 2
+                        name: experiences
+                        description: Esperienze culinarie
+                        isActive: true
+
+components:
+  parameters:
+    ProductId:
+      name: productId
+      in: path
+      required: true
+      description: ID del prodotto
+      schema:
+        type: integer
+        minimum: 1
+
+  schemas:
+    ServiceProduct:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - currency
+        - category
+        - isActive
+      properties:
+        id:
+          type: integer
+          description: Identificatore unico
+          example: 1
+        name:
+          type: string
+          description: Nome del prodotto
+          minLength: 3
+          maxLength: 200
+          example: Tour della città
+        description:
+          type: string
+          description: Descrizione dettagliata
+          maxLength: 2000
+          example: Tour guidato di 3 ore nel centro storico
+        price:
+          type: number
+          format: float
+          description: Prezzo base
+          minimum: 0
+          maximum: 999999.99
+          example: 25.00
+        currency:
+          type: string
+          description: Codice valuta ISO 4217
+          pattern: '^[A-Z]{3}$'
+          default: EUR
+          example: EUR
+        category:
+          type: string
+          description: Categoria di appartenenza
+          example: tours
+        imageUrl:
+          type: string
+          format: uri
+          description: URL immagine prodotto
+          example: https://example.com/tour.jpg
+        isActive:
+          type: boolean
+          description: Se il prodotto è attivo
+          default: true
+          example: true
+        stock:
+          type: integer
+          description: Stock di default
+          minimum: 0
+          maximum: 9999
+          example: 30
+        availabilityStartDate:
+          type: string
+          format: date
+          description: Data inizio validità (YYYY-MM-DD)
+          example: '2025-01-01'
+        availabilityEndDate:
+          type: string
+          format: date
+          description: Data fine validità (YYYY-MM-DD)
+          example: '2025-12-31'
+
+    ProductInput:
+      type: object
+      required:
+        - name
+        - description
+        - price
+        - category
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        price:
+          type: number
+          format: float
+          minimum: 0
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          default: EUR
+        category:
+          type: string
+        imageUrl:
+          type: string
+          format: uri
+        stock:
+          type: integer
+          minimum: 0
+        availabilityStartDate:
+          type: string
+          format: date
+        availabilityEndDate:
+          type: string
+          format: date
+
+    DailyPrice:
+      type: object
+      required:
+        - id
+        - productId
+        - date
+        - priceType
+        - finalPrice
+        - currency
+      properties:
+        id:
+          type: integer
+          description: Identificatore unico
+          example: 1
+        productId:
+          type: integer
+          description: ID del prodotto
+          example: 1
+        date:
+          type: string
+          format: date
+          description: Data (YYYY-MM-DD)
+          example: '2025-12-25'
+        priceType:
+          $ref: '#/components/schemas/PriceType'
+        fixedPrice:
+          type: number
+          format: float
+          description: Prezzo fisso (se priceType=fixed)
+          minimum: 0
+          example: 45.00
+        percentageAdjustment:
+          type: number
+          format: float
+          description: Percentuale sconto/aumento (se priceType=percentage)
+          minimum: -100
+          maximum: 1000
+          example: -20
+        finalPrice:
+          type: number
+          format: float
+          description: Prezzo finale calcolato
+          minimum: 0
+          example: 25.00
+        currency:
+          type: string
+          description: Codice valuta ISO 4217
+          example: EUR
+        stock:
+          type: integer
+          description: Disponibilità per questo giorno
+          minimum: 0
+          example: 30
+        isActive:
+          type: boolean
+          description: Se il prodotto è vendibile in questo giorno
+          default: true
+          example: true
+
+    PriceOverride:
+      type: object
+      required:
+        - productId
+        - date
+        - priceType
+      properties:
+        productId:
+          type: integer
+          example: 1
+        date:
+          type: string
+          format: date
+          example: '2025-12-25'
+        priceType:
+          $ref: '#/components/schemas/PriceType'
+        value:
+          type: number
+          format: float
+          description: Prezzo fisso o percentuale (dipende da priceType)
+          example: 45.00
+        stock:
+          type: integer
+          minimum: 0
+          example: 15
+        isActive:
+          type: boolean
+          example: true
+
+    PriceType:
+      type: string
+      enum:
+        - base
+        - fixed
+        - percentage
+      description: |
+        Tipo di prezzo:
+        * `base` - Usa prezzo base del prodotto
+        * `fixed` - Prezzo fisso personalizzato
+        * `percentage` - Sconto/aumento percentuale
+      example: fixed
+
+    Category:
+      type: object
+      required:
+        - id
+        - name
+        - isActive
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: tours
+        description:
+          type: string
+          example: Tour guidati della città
+        imageUrl:
+          type: string
+          format: uri
+        isActive:
+          type: boolean
+          example: true
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Codice errore
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Messaggio errore leggibile
+          example: Invalid request parameters
+        details:
+          type: array
+          description: Dettagli aggiuntivi errore
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+          example:
+            - field: price
+              message: Price must be greater than 0
+            - field: date
+              message: Invalid date format
+
+  responses:
+    BadRequest:
+      description: Richiesta non valida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BAD_REQUEST
+            message: Invalid request parameters
+
+    NotFound:
+      description: Risorsa non trovata
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NOT_FOUND
+            message: Resource not found
+
+    ValidationError:
+      description: Errore di validazione
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: VALIDATION_ERROR
+            message: Validation failed
+            details:
+              - field: price
+                message: Price must be greater than 0
+              - field: stock
+                message: Stock must be an integer
+
+    InternalServerError:
+      description: Errore interno del server
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: INTERNAL_SERVER_ERROR
+            message: An unexpected error occurred
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token per autenticazione
+
+# Applicare autenticazione a tutti gli endpoints (commentato per ora)
+# security:
+#   - bearerAuth: []
